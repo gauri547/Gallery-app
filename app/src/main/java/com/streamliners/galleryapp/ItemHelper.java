@@ -31,16 +31,15 @@ public class ItemHelper {
     private Context context;
     private OnCompleteListener listener;
 
-    private String rectangularImageUrl = "https://picsum.photos/%d/%d"
-            , squareImageUrl = "https://picsum.photos/%d";
+    private String rectangularImageUrl = "https://picsum.photos/%d/%d", squareImageUrl = "https://picsum.photos/%d";
 
     private Bitmap bitmap;
     private Set<Integer> colors;
 
 
-
     /**
      * Fetch Data for Rectangular Image
+     *
      * @param x
      * @param y
      * @param context
@@ -57,6 +56,7 @@ public class ItemHelper {
 
     /**
      * Fetch data for Square Image
+     *
      * @param x
      * @param context
      * @param listener
@@ -72,6 +72,7 @@ public class ItemHelper {
 
     /**
      * Fetches image from URL
+     *
      * @param url
      */
     void fetchImage(String url) {
@@ -113,10 +114,11 @@ public class ItemHelper {
 
     /**
      * Fetches colors from Palette
+     *
      * @param palette
      * @return
      */
-    private Set<Integer> getColorsFromPalette (Palette palette) {
+    private Set<Integer> getColorsFromPalette(Palette palette) {
         Set<Integer> colors = new HashSet<>();
         colors.add(palette.getVibrantColor(0));
         colors.add(palette.getLightVibrantColor(0));
@@ -144,7 +146,7 @@ public class ItemHelper {
                     @Override
                     public void onSuccess(@NonNull @NotNull List<ImageLabel> imageLabels) {
                         List<String> strings = new ArrayList<>();
-                        for (ImageLabel label : imageLabels){
+                        for (ImageLabel label : imageLabels) {
                             strings.add(label.getText());
                         }
                         listener.onFetchedData(bitmap, colors, strings);
@@ -152,7 +154,7 @@ public class ItemHelper {
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
-                    public void onFailure(@NonNull  Exception e) {
+                    public void onFailure(@NonNull Exception e) {
                         listener.onError(e.toString());
                     }
                 });
@@ -161,9 +163,10 @@ public class ItemHelper {
     /**
      * Callback when image data is fetched
      */
-    interface OnCompleteListener{
+    interface OnCompleteListener {
         void onFetchedData(Bitmap image, Set<Integer> colors, List<String> labels);
+
         void onError(String error);
     }
-
+}
 
