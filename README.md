@@ -14,8 +14,6 @@ Download APK [here](https://github.com/gauri547/Gallery-app/releases/download/v1
 
 ## Preview of the Application
 
-![image](https://user-images.githubusercontent.com/81371138/118358423-4f022b80-b59c-11eb-9fa6-95bf1c45cc2a.png)
-
 ![image](https://user-images.githubusercontent.com/81371138/118358441-650fec00-b59c-11eb-9306-3f89f1f9f94c.png)
 
 ![image](https://user-images.githubusercontent.com/81371138/118358453-6d682700-b59c-11eb-9062-7dbcdd4c933d.png)
