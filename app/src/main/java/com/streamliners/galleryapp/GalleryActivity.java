@@ -3,7 +3,26 @@ package com.streamliners.galleryapp;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.PersistableBundle;
+import android.util.Base64;
+import android.view.Menu;
+import android.view.MenuItem;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.streamliners.galleryapp.databinding.ActivityGalleryBinding;
+import com.streamliners.galleryapp.databinding.ItemCardBinding;
+import com.streamliners.galleryapp.models.Item;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GalleryActivity extends AppCompatActivity {
     ActivityGalleryBinding b;
@@ -121,7 +140,7 @@ public class GalleryActivity extends AppCompatActivity {
         SharedPreferences.Editor myEdit = preferences.edit();
 
         int numOfImg = items.size();
-        myEdit.putInt(Constants.NUMOFIMG, numOfImg).apply();
+        myEdit.putInt(Constants.NUM_OF_IMG, numOfImg).apply();
 
         int counter = 0;
         for (Item item : items){
@@ -135,7 +154,7 @@ public class GalleryActivity extends AppCompatActivity {
     }
 
     private void inflateDataFromSharedPreferences(){
-        int itemCount = preferences.getInt(Constants.NUMOFIMG,0);
+        int itemCount = preferences.getInt(Constants.NUM_OF_IMG,0);
 
         // Inflate all items from shared preferences
         for (int i = 0; i < itemCount; i++){

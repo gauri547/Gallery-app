@@ -1,11 +1,24 @@
 package com.streamliners.galleryapp;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.CompoundButton;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
+
+import com.google.android.material.chip.Chip;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.streamliners.galleryapp.databinding.ChipColorBinding;
+import com.streamliners.galleryapp.databinding.ChipLabelBinding;
+import com.streamliners.galleryapp.databinding.DialogAddImageBinding;
 import com.streamliners.galleryapp.models.Item;
 
 import java.util.List;
