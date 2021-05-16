@@ -3,15 +3,16 @@ package com.streamliners.galleryapp;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.palette.graphics.Palette;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.streamliners.galleryapp.databinding.ItemCardBinding;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.mlkit.vision.common.InputImage;
@@ -20,153 +21,216 @@ import com.google.mlkit.vision.label.ImageLabeler;
 import com.google.mlkit.vision.label.ImageLabeling;
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 public class ItemHelper {
-    private Context context;
+
     private OnCompleteListener listener;
-
-    private String rectangularImageUrl = "https://picsum.photos/%d/%d", squareImageUrl = "https://picsum.photos/%d";
-
-    private Bitmap bitmap;
+    private String rectangularImageUrl = "https://picsum.photos/%d/%d?type=" + UUID.randomUUID();
+    private String squareImageUrl = "https://picsum.photos/%d?type=" + UUID.randomUUID();
+    private Context context;
     private Set<Integer> colors;
-
+    private Bitmap bitmap;
+    private List<String> labels;
+    private String url;
 
     /**
-     * Fetch Data for Rectangular Image
+     * Fetch rectangular random image
      *
-     * @param x
-     * @param y
-     * @param context
-     * @param listener
+     * @param x Height of the image
+     * @param y  Width of the image
+     * @param context  Activity state
+     * @param listener Complete event handler
      */
     public void fetchData(int x, int y, Context context, OnCompleteListener listener) {
         this.context = context;
         this.listener = listener;
+        Log.d("Abhi", "fetchImage: " + String.format(rectangularImageUrl, x, y));
+        //fetch rectangular image
         fetchImage(
-                String.format(rectangularImageUrl, x, y)
-        );
+                String.format(rectangularImageUrl, x, y));
+
+
     }
 
-
     /**
-     * Fetch data for Square Image
+     * Fetch square random image
      *
-     * @param x
-     * @param context
-     * @param listener
+     * @param x        Height and Width of image
+     * @param context  Activity state
+     * @param listener Complete event handler
      */
     public void fetchData(int x, Context context, OnCompleteListener listener) {
         this.context = context;
         this.listener = listener;
+
+        //fetch square image
         fetchImage(
-                String.format(squareImageUrl, x)
-        );
+                String.format(squareImageUrl, x));
     }
 
-
     /**
-     * Fetches image from URL
+     * Fetch Random image
      *
-     * @param url
+     * @param url Random Image URl
      */
-    void fetchImage(String url) {
+    private void fetchImage(String url) {
 
+        this.url = url;
+        //Fetch image by using glide library
         Glide.with(context)
                 .asBitmap()
                 .load(url)
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .skipMemoryCache(true)
                 .into(new CustomTarget<Bitmap>() {
+                    //On image successfully fetch
                     @Override
-                    public void onResourceReady(@NonNull @org.jetbrains.annotations.NotNull Bitmap resource, @Nullable @org.jetbrains.annotations.Nullable Transition<? super Bitmap> transition) {
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+
                         bitmap = resource;
-                        extractPaletteFromBitmap();
+
+                        //Get colors from image
+                        extraPaletteFromBitmap();
                     }
 
                     @Override
-                    public void onLoadCleared(@Nullable @org.jetbrains.annotations.Nullable Drawable placeholder) {
+                    public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                        super.onLoadFailed(errorDrawable);
+
+                        //call onComplete listener
+                        listener.onError("Image load failed");
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                    }
+
+                });
+    }
+
+    /**
+     * @param url Image Url
+     * @param context  Activity state
+     * @param listener Complete event handler
+     */
+    public void editImage(String url, Context context, OnCompleteListener listener) {
+        this.context = context;
+        this.url = url;
+        this.listener = listener;
+        Glide.with(context)
+                .asBitmap()
+                .onlyRetrieveFromCache(true)
+                .load(url)
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        bitmap = resource;
+                        extraPaletteFromBitmap();
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
 
                     }
                 });
     }
 
-
     /**
-     * Extract Color Palettes from Image(Bitmap)
+     * Fetch colors from image by using Palette library
      */
-    private void extractPaletteFromBitmap() {
+    private void extraPaletteFromBitmap() {
         Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
-            @Override
-            public void onGenerated(Palette palette) {
-                colors = getColorsFromPalette(palette);
+            public void onGenerated(Palette p) {
 
-                extractLabels();
+                //call getColorsFromPalette function
+                colors = getColorsFromPalette(p);
+
+                //Get label from image
+                labelImage();
             }
         });
     }
 
-
     /**
-     * Fetches colors from Palette
-     *
-     * @param palette
-     * @return
+     * Fetch labels from image by using mlkit image-labeling library
      */
-    private Set<Integer> getColorsFromPalette(Palette palette) {
-        Set<Integer> colors = new HashSet<>();
-        colors.add(palette.getVibrantColor(0));
-        colors.add(palette.getLightVibrantColor(0));
-        colors.add(palette.getDarkVibrantColor(0));
-
-        colors.add(palette.getMutedColor(0));
-        colors.add(palette.getLightMutedColor(0));
-        colors.add(palette.getDarkMutedColor(0));
-
-        colors.add(palette.getVibrantColor(0));
-        colors.remove(0);
-
-        return colors;
-    }
-
-
-    /**
-     * Extracts labels from Image
-     */
-    private void extractLabels() {
-        InputImage image = InputImage.fromBitmap(bitmap, 0);
+    private void labelImage() {
+        InputImage inputImage = InputImage.fromBitmap(bitmap, 0);
         ImageLabeler labeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS);
-        labeler.process(image)
+
+        //Get labels
+        labeler.process(inputImage)
                 .addOnSuccessListener(new OnSuccessListener<List<ImageLabel>>() {
                     @Override
-                    public void onSuccess(@NonNull @NotNull List<ImageLabel> imageLabels) {
-                        List<String> strings = new ArrayList<>();
-                        for (ImageLabel label : imageLabels) {
-                            strings.add(label.getText());
+                    public void onSuccess(List<ImageLabel> labels) {
+                        ItemHelper.this.labels = new ArrayList<>();
+
+                        //store labels in List<String> labels
+                        for (ImageLabel imageLabel : labels) {
+                            ItemHelper.this.labels.add(imageLabel.getText());
                         }
-                        listener.onFetchedData(bitmap, colors, strings);
+                        //call onComplete listener
+                        listener.onFetch(bitmap, colors, ItemHelper.this.labels, url);
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
+                        //call onComplete listener
                         listener.onError(e.toString());
                     }
                 });
     }
 
     /**
-     * Callback when image data is fetched
+     * @param p Palette of image
+     * @return set of colors
+     */
+    private Set<Integer> getColorsFromPalette(Palette p) {
+        Set<Integer> colors = new HashSet<>();
+
+        //Store colors in Set<Integer> colors
+        //Vibrant colors
+        colors.add(p.getVibrantColor(0));
+        colors.add(p.getLightVibrantColor(0));
+        colors.add(p.getDarkVibrantColor(0));
+        //Muted colors
+        colors.add(p.getMutedColor(0));
+        colors.add(p.getLightMutedColor(0));
+        colors.add(p.getDarkMutedColor(0));
+
+        //Remove black color
+        colors.remove(0);
+
+        return colors;
+
+    }
+
+    /**
+     * Interface call when a image is fetch or give some error.
      */
     interface OnCompleteListener {
-        void onFetchedData(Bitmap image, Set<Integer> colors, List<String> labels);
+        /**
+         * Call when image all data fetch completely
+         *
+         * @param bitmap Image
+         * @param colorPalette Image colors
+         * @param labels Image labels
+         * @param url Image url
+         */
+        void onFetch(Bitmap bitmap, Set<Integer> colorPalette, List<String> labels, String url);
 
-        void onError(String error);
+        /**
+         * Call when error come
+         *
+         * @param exception Error
+         */
+        void onError(String exception);
     }
+
 }
 

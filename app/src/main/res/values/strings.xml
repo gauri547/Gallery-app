@@ -1,11 +1,10 @@
 <resources>
-    <string name="app_name">Gallery App</string>
-    <string name="cardview">CardView</string>
-    <string name="enter_image_dimensions">Enter image dimensions</string>
-    <string name="height">Height</string>
-    <string name="width">Width</string>
-    <string name="add_image">Add Image</string>
-    <string name="fetch_image">FETCH IMAGE</string>
-    <string name="label">Label</string>
-    <string name="add">ADD</string>
+    <string name="app_name">Gallery app</string>
+    <string name="loading_image">Loading Image…</string>
+    <string name="loading_failed">Loading failed $1%s</string>
+    <string name="load_successfully">This is a Random Image</string>
+    <string name="No_item">No items.\nTry adding from the action above</string>
+
+    <item name="delete" type="id" />
+    <item name="edit" type="id" />
 </resources>

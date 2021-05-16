@@ -13,5 +13,19 @@
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
     </style>
-    <style name="DialogTitleStyle" parent="TextAppearance.MaterialComponents.Headline6"/>
+
+    //Custom dialog theme
+    <style name="CustomDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="shapeAppearanceOverlay">@style/CustomShape</item>
+    </style>
+
+    //Custom Shape for dialog box
+    <style name="CustomShape" parent="ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">24dp</item>
+    </style>
+
+    <style name="titleStyle" parent="TextAppearance.MaterialComponents.Headline6">
+
+    </style>
 </resources>

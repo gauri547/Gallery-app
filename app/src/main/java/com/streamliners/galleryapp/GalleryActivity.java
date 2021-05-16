@@ -1,34 +1,40 @@
 package com.streamliners.galleryapp;
 
 import androidx.annotation.NonNull;
+
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+
 import android.os.Bundle;
-import android.os.PersistableBundle;
-import android.util.Base64;
+import android.util.Log;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.TextView;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.bumptech.glide.Glide;
 import com.streamliners.galleryapp.databinding.ActivityGalleryBinding;
 import com.streamliners.galleryapp.databinding.ItemCardBinding;
 import com.streamliners.galleryapp.models.Item;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class GalleryActivity extends AppCompatActivity {
     ActivityGalleryBinding b;
-    SharedPreferences preferences;
-    List<Item> items = new ArrayList<>();
-    private boolean isDialogBoxShowed = false;
+    List<Item> itemList;
+    int selectedPosition;
+    List<Item> removeItem;
+    private boolean isEdited;
+    private boolean isAdd;
+    int noOfImages = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,32 +42,64 @@ public class GalleryActivity extends AppCompatActivity {
         b = ActivityGalleryBinding.inflate(getLayoutInflater());
         setContentView(b.getRoot());
 
+        //Load data from sharedPreferences
+        loadSharedPreferenceData();
 
-        preferences = getPreferences(MODE_PRIVATE);
-        inflateDataFromSharedPreferences();
+
+    }
+
+    /**
+     * Load data from sharedPreferences
+     * Fetch Images from caches
+     */
+    private void loadSharedPreferenceData() {
+        String items = getPreferences(MODE_PRIVATE).getString("ITEMS", null);
+        if (items == null || items.equals("[]")) {
+            return;
+        }
+        b.heading.setVisibility(View.GONE);
+        Log.d("Now", "loadSharedPreferenceData: " + items);
+        Gson gson = new Gson();
+        Type type = new TypeToken<List<Item>>() {
+        }.getType();
+
+        itemList = gson.fromJson(items, type);
+
+        //Fetch data from caches
+        for (Item item : itemList) {
+            ItemCardBinding binding = ItemCardBinding.inflate(getLayoutInflater());
+
+            Glide.with(this)
+                    .asBitmap()
+                    .onlyRetrieveFromCache(true)
+                    .load(item.url)
+                    .into(binding.fetchImage);
+
+            binding.Title.setBackgroundColor(item.color);
+            binding.Title.setText(item.label);
+
+            Log.d("Now", "onResourceReady: " + item.label);
+
+            b.linearLayout.addView(binding.getRoot());
+            setupContextMenu(binding, b.linearLayout.getChildCount() - 1);
+
+
+        }
+
+        noOfImages = itemList.size();
+
     }
 
 
-    /**
-     * Gives Add Image Option in menu
-     * @param menu
-     * @return
-     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.gallery, menu);
         return true;
     }
 
-
-    /**
-     * Shows add image dialog on clicking icon in menu
-     * @param item
-     * @return
-     */
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.addImage){
+        if (item.getItemId() == R.id.addImage) {
             showAddImageDialog();
             return true;
         }
@@ -69,22 +107,98 @@ public class GalleryActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    public boolean onContextItemSelected(@NonNull MenuItem item) {
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+        switch (item.getItemId()) {
+            case R.id.edit:
+                editImage();
+                return true;
+            case R.id.delete:
+                deleteImage();
+                return true;
+            default:
+        }
+        return super.onContextItemSelected(item);
+    }
+
     /**
-     * Shows Image Dialog Box
+     * Set context menu
+     *
+     * @param binding  Reference of ItemCardBinding
+     * @param position LinearLayout child position
      */
-    private void showAddImageDialog() {
-        if (this.getRequestedOrientation() != ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
-            isDialogBoxShowed = true;
-            // To set the screen orientation in portrait mode only
-            this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+    private void setupContextMenu(ItemCardBinding binding, int position) {
+
+        binding.cardView.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
+            @Override
+            public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+                v.getId();
+                Log.d("Now", "onCreateContextMenu: ");
+
+
+                getMenuInflater().inflate(R.menu.context_menu, menu);
+                selectedPosition = position;
+
+            }
+        });
+    }
+
+
+    /**
+     * Delete Image
+     */
+    private void deleteImage() {
+        Log.d("Now", "deleteImage: ");
+
+        b.linearLayout.getChildAt(selectedPosition).setVisibility(View.GONE);
+
+        if (removeItem == null) {
+            removeItem = new ArrayList<>();
         }
 
+        removeItem.add(itemList.get(selectedPosition));
+
+        --noOfImages;
+
+        if (noOfImages == 0) {
+            b.heading.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * Edit Image
+     */
+    private void editImage() {
+        new AddImageDialog().editFetchImage(this, itemList.get(selectedPosition), new AddImageDialog.OnCompleteListener() {
+            @Override
+            public void onImageAdd(Item item) {
+                TextView textView = b.linearLayout.getChildAt(selectedPosition ).findViewById(R.id.Title);
+                textView.setText(item.label);
+                textView.setBackgroundColor(item.color);
+                itemList.set(selectedPosition, new Item(item.color, item.label, item.url));
+                isEdited = true;
+            }
+
+            @Override
+            public void onError(String error) {
+
+
+            }
+        });
+    }
+
+
+    /**
+     * To show the dialog to add image
+     */
+    private void showAddImageDialog() {
+
         new AddImageDialog()
-                .show(this, new AddImageDialog.onCompleteListener() {
+                .showDialog(this, new AddImageDialog.OnCompleteListener() {
                     @Override
-                    public void onImageAdded(Item item) {
-                        items.add(item);
-                        inflateViewforItem(item);
+                    public void onImageAdd(Item item) {
+                        inflateViewForItem(item);
                     }
 
                     @Override
@@ -93,89 +207,77 @@ public class GalleryActivity extends AppCompatActivity {
                                 .setTitle("Error")
                                 .setMessage(error)
                                 .show();
+
                     }
                 });
     }
 
-
     /**
-     * Adds Image Card to Linear Layout
-     * @param item
+     * To inflate the view for the incoming item
+     *
+     * @param item {@link Item}
      */
-    private void inflateViewforItem(Item item) {
+    private void inflateViewForItem(Item item) {
 
-        //Inflate Layout
+        if (noOfImages == 0) {
+            b.heading.setVisibility(View.GONE);
+        }
+        //Inflate layout
         ItemCardBinding binding = ItemCardBinding.inflate(getLayoutInflater());
-        //Bind Data
-        binding.imageView.setImageBitmap(item.image);
-        binding.title.setText(item.label);
-        binding.title.setBackgroundColor(item.color);
 
-        //Add it to the list
-        b.list.addView(binding.getRoot());
-        this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+        //Bind data
+        binding.fetchImage.setImageBitmap(item.image);
+        binding.Title.setBackgroundColor(item.color);
+        binding.Title.setText(item.label);
+
+
+        b.linearLayout.addView(binding.getRoot());
+
+        //Add Item
+        Item newItem = new Item(item.color, item.label, item.url);
+
+        if (itemList == null) {
+            itemList = new ArrayList<>();
+        }
+
+        itemList.add(newItem);
+        isAdd = true;
+
+        setupContextMenu(binding, b.linearLayout.getChildCount() - 1);
+
+        noOfImages++;
     }
 
-    private String stringFromBitmap(Bitmap bitmap){
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos); //bm is the bitmap object
-        byte[] b = baos.toByteArray();
-
-        String encodedImage = Base64.encodeToString(b, Base64.DEFAULT);
-        return encodedImage;
-    }
-
-    private Bitmap bitmapFromString(String str){
-        byte [] encodeByte=Base64.decode(str,Base64.DEFAULT);
-
-        InputStream inputStream  = new ByteArrayInputStream(encodeByte);
-        Bitmap bitmap  = BitmapFactory.decodeStream(inputStream);
-        return bitmap;
-    }
 
     @Override
     protected void onPause() {
         super.onPause();
 
-        SharedPreferences.Editor myEdit = preferences.edit();
+        //Remove Item and save
+        if (removeItem != null) {
+            itemList.removeAll(removeItem);
 
-        int numOfImg = items.size();
-        myEdit.putInt(Constants.NUM_OF_IMG, numOfImg).apply();
+            Gson gson = new Gson();
+            String json = gson.toJson(itemList);
 
-        int counter = 0;
-        for (Item item : items){
-            myEdit.putInt(Constants.COLOR + counter, item.color)
-                    .putString(Constants.LABEL + counter, item.label)
-                    .putString(Constants.IMAGE + counter, stringFromBitmap(item.image))
-                    .apply();
-            counter++;
+            getPreferences(MODE_PRIVATE).edit().putString("ITEMS", json).apply();
+
+            finish();
         }
-        myEdit.commit();
-    }
 
-    private void inflateDataFromSharedPreferences(){
-        int itemCount = preferences.getInt(Constants.NUM_OF_IMG,0);
-
-        // Inflate all items from shared preferences
-        for (int i = 0; i < itemCount; i++){
-            Item item = new Item(bitmapFromString(preferences.getString(Constants.IMAGE + i,""))
-                    ,preferences.getInt(Constants.COLOR + i,0)
-                    ,preferences.getString(Constants.LABEL + i,""));
-
-            items.add(item);
-            inflateViewforItem(item);
+        //save in SharedPreference
+        if (isEdited || isAdd) {
+            Gson gson = new Gson();
+            String json = gson.toJson(itemList);
+            getPreferences(MODE_PRIVATE).edit().putString("ITEMS", json).apply();
+            isAdd = false;
+            isEdited = false;
         }
+
     }
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState, @NonNull PersistableBundle outPersistentState) {
-        super.onSaveInstanceState(outState, outPersistentState);
-    }
+
+
 }
-
-
-
-
-
 
 
 

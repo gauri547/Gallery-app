@@ -5,6 +5,6 @@
     style="@style/Widget.MaterialComponents.Chip.Filter"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:text="Ocean"
+    android:text="car"
     app:checkedIconTint="@color/black"
     tools:showIn="@layout/dialog_add_image" />

@@ -4,7 +4,11 @@
 
     <item android:id="@+id/addImage"
         android:icon="@drawable/ic_baseline_add_photo_alternate_24"
-        android:title="@string/add_image"
+        android:title="add_image"
         app:showAsAction="always"/>
-
 </menu>
+
+
+
+
+
