@@ -188,23 +188,23 @@ public class AddImageDialog implements ItemHelper.OnCompleteListener {
     /**
      * Fetch rectangular Image
      *
-     * @param height Height of Image
-     * @param width  Width of Image
+     * @param a=height  of Image
+     * @param b=width  of Image
      */
-    private void fetchImage(int width, int height) {
+    private void fetchImage(int a, int b) {
         //call fetchData function of ItemHelper class
         new ItemHelper().
-                fetchData(width, height, context, this);
+                fetchData(context,a,b, this);
     }
 
     /**
      * Fetch square Image
      *
-     * @param x Height and Width of image
+     * @param x =side
      */
     private void fetchImage(int x) {
         //call fetchData function of ItemHelper class
-        new ItemHelper().fetchData(x, context, this);
+        new ItemHelper().fetchData(context,x,  this);
     }
 
 
