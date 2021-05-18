@@ -49,7 +49,7 @@ public class ItemHelper {
     public void fetchData(int x, int y, Context context, OnCompleteListener listener) {
         this.context = context;
         this.listener = listener;
-        Log.d("Abhi", "fetchImage: " + String.format(rectangularImageUrl, x, y));
+        Log.d("Now", "fetchImage: " + String.format(rectangularImageUrl, x, y));
         //fetch rectangular image
         fetchImage(
                 String.format(rectangularImageUrl, x, y));

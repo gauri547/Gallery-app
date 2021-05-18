@@ -5,9 +5,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -35,6 +35,8 @@ public class GalleryActivity extends AppCompatActivity {
     private boolean isEdited;
     private boolean isAdd;
     int noOfImages = 0;
+    // Shared preferences
+    SharedPreferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,7 +83,7 @@ public class GalleryActivity extends AppCompatActivity {
             Log.d("Now", "onResourceReady: " + item.label);
 
             b.linearLayout.addView(binding.getRoot());
-            setupContextMenu(binding, b.linearLayout.getChildCount() - 1);
+
 
 
         }
@@ -106,87 +108,6 @@ public class GalleryActivity extends AppCompatActivity {
         return false;
     }
 
-
-    @Override
-    public boolean onContextItemSelected(@NonNull MenuItem item) {
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-        switch (item.getItemId()) {
-            case R.id.edit:
-                editImage();
-                return true;
-            case R.id.delete:
-                deleteImage();
-                return true;
-            default:
-        }
-        return super.onContextItemSelected(item);
-    }
-
-    /**
-     * Set context menu
-     *
-     * @param binding  Reference of ItemCardBinding
-     * @param position LinearLayout child position
-     */
-    private void setupContextMenu(ItemCardBinding binding, int position) {
-
-        binding.cardView.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
-            @Override
-            public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-                v.getId();
-                Log.d("Now", "onCreateContextMenu: ");
-
-
-                getMenuInflater().inflate(R.menu.context_menu, menu);
-                selectedPosition = position;
-
-            }
-        });
-    }
-
-
-    /**
-     * Delete Image
-     */
-    private void deleteImage() {
-        Log.d("Now", "deleteImage: ");
-
-        b.linearLayout.getChildAt(selectedPosition).setVisibility(View.GONE);
-
-        if (removeItem == null) {
-            removeItem = new ArrayList<>();
-        }
-
-        removeItem.add(itemList.get(selectedPosition));
-
-        --noOfImages;
-
-        if (noOfImages == 0) {
-            b.heading.setVisibility(View.VISIBLE);
-        }
-    }
-
-    /**
-     * Edit Image
-     */
-    private void editImage() {
-        new AddImageDialog().editFetchImage(this, itemList.get(selectedPosition), new AddImageDialog.OnCompleteListener() {
-            @Override
-            public void onImageAdd(Item item) {
-                TextView textView = b.linearLayout.getChildAt(selectedPosition ).findViewById(R.id.Title);
-                textView.setText(item.label);
-                textView.setBackgroundColor(item.color);
-                itemList.set(selectedPosition, new Item(item.color, item.label, item.url));
-                isEdited = true;
-            }
-
-            @Override
-            public void onError(String error) {
-
-
-            }
-        });
-    }
 
 
     /**
@@ -242,9 +163,6 @@ public class GalleryActivity extends AppCompatActivity {
 
         itemList.add(newItem);
         isAdd = true;
-
-        setupContextMenu(binding, b.linearLayout.getChildCount() - 1);
-
         noOfImages++;
     }
 

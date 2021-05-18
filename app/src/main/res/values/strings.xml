@@ -5,6 +5,4 @@
     <string name="load_successfully">This is a Random Image</string>
     <string name="No_item">No items.\nTry adding from the action above</string>
 
-    <item name="delete" type="id" />
-    <item name="edit" type="id" />
 </resources>
