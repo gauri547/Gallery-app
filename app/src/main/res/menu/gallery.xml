@@ -2,9 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <item android:id="@+id/downloadImage"
+        android:icon="@drawable/ic_download"
+        app:showAsAction="always"
+        android:title="Image from Internet"/>
+
     <item android:id="@+id/addImage"
         android:icon="@drawable/ic_baseline_add_photo_alternate_24"
-        android:title="add_image"
+        android:title="Image from Files"
         app:showAsAction="always"/>
 </menu>
 

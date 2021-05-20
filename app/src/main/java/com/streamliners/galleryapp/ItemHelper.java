@@ -78,7 +78,7 @@ public class ItemHelper {
      * @param url Random Image URl
      */
     private void fetchImage(String url) {
-        new RedirectedURL().fetchRedirectedURL(new RedirectedURL.OnCompleteListener(){
+        new RedirectedURL().getRedirectedURL(new RedirectedURL.OnCompleteListener(){
             @Override
             public void onFetched(String redirectedUrl) {
                 url1 = redirectedUrl;
@@ -100,8 +100,6 @@ public class ItemHelper {
                             @Override
                             public void onLoadFailed(@Nullable Drawable errorDrawable) {
                                 super.onLoadFailed(errorDrawable);
-
-                                //call onComplete listener
                                 listener.onError("Image load failed");
                             }
 
@@ -116,34 +114,54 @@ public class ItemHelper {
             }
 
 
+
         }).execute(url);
     }
+    public void editImage(String url, Context context,OnCompleteListener listener){
+        this.context=context;
+        this.url1=url1;
+        this.listener=listener;
+        Glide.with(context).asBitmap().onlyRetrieveFromCache(true).load(url).into(new CustomTarget<Bitmap>() {
+            @Override
+            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                bitmap=resource;
+                extraPaletteFromBitmap();
+            }
+
+            @Override
+            public void onLoadCleared(@Nullable Drawable placeholder) {
+
+            }
+        });
+    }
+
 
     /**
-     * @param url Image Url
-     * @param context  Activity state
-     * @param listener Complete event handler
+     * Fetch image from gallery
      */
-    public void editImage(String url, Context context, OnCompleteListener listener) {
-        this.context = context;
-        this.url1 = url1;
-        this.listener = listener;
+    public void fetchImgFromGallery(Context context,String path,OnCompleteListener listener){
+        this.context=context;
+        //url1 = redirect url
+        this.url1=path;
+        this.listener=listener;
+
         Glide.with(context)
                 .asBitmap()
-                .onlyRetrieveFromCache(true)
-                .load(url)
+                .load(url1)
                 .into(new CustomTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                        bitmap = resource;
+                        bitmap=resource;
                         extraPaletteFromBitmap();
                     }
 
                     @Override
+
                     public void onLoadCleared(@Nullable Drawable placeholder) {
 
                     }
                 });
+
     }
 
     /**
@@ -225,17 +243,10 @@ public class ItemHelper {
     interface OnCompleteListener {
         /**
          * Call when image all data fetch completely
-         *
-         * @param bitmap Image
-         * @param colorPalette Image colors
-         * @param labels Image labels
-         * @param url Image url
          */
         void onFetch(Bitmap bitmap, Set<Integer> colorPalette, List<String> labels, String url);
 
         /**
-         * Call when error come
-         *
          * @param exception Error
          */
         void onError(String exception);

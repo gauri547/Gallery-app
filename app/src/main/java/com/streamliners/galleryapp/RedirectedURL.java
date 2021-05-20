@@ -13,20 +13,11 @@ public class RedirectedURL extends AsyncTask<String, Void, String> {
     /**
      * Fetch the redirected URL
      */
-    public RedirectedURL fetchRedirectedURL(OnCompleteListener listener1){
-        listener=listener1;
+    public RedirectedURL getRedirectedURL(OnCompleteListener listener){
+        this.listener=listener;
         return this;
     }
     //Async methods
-
-    /**
-     * After getting response use OnPostExecute method used
-     */
-    @Override
-    protected void onPostExecute(String s) {
-        listener.onFetched(s);
-    }
-
     /**
      * When we want to send the request doInBackground method used
      */
@@ -40,7 +31,10 @@ public class RedirectedURL extends AsyncTask<String, Void, String> {
         URL uTemp = null;
         String redUrl;
         HttpURLConnection connection = null;
-
+        /**
+         * MalFormedURLException
+         * Because provided protocol missing
+         */
         try{
             uTemp = new URL(url);
         } catch (MalformedURLException exp){
@@ -65,6 +59,15 @@ public class RedirectedURL extends AsyncTask<String, Void, String> {
         return redUrl;
 
     }
+
+
+    // To get response
+
+    @Override
+    protected void onPostExecute(String s) {
+        listener.onFetched(s);
+    }
+
     // For CallBack
 
     interface OnCompleteListener{

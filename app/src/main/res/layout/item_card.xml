@@ -1,20 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/frameLayout"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_height="wrap_content">
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cardView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        android:elevation="4dp"
-        android:foreground="?attr/selectableItemBackground"
         android:clickable="true"
+        android:elevation="4dp"
         android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
         app:cardCornerRadius="20dp">
 
         <LinearLayout
@@ -26,21 +25,19 @@
                 android:id="@+id/fetchImage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:adjustViewBounds="true"
-                />
+                android:adjustViewBounds="true" />
 
             <TextView
                 android:id="@+id/Title"
                 style="@style/TextAppearance.MaterialComponents.Headline6"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="cloud"
+                android:background="#F80808"
                 android:paddingTop="2dp"
                 android:paddingBottom="2dp"
-                android:background="#F80808"
+                android:text="cloud"
                 android:textAlignment="center"
                 android:textColor="@color/white" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
-
 </FrameLayout>
