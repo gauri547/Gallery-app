@@ -28,15 +28,15 @@ import java.util.Set;
 
 public class AddImageDialog implements ItemHelper.OnCompleteListener {
 
-    private String url;
-    private Item item;
-    private Bitmap image;
     private Context context;
-    private AlertDialog dialog;
-    private boolean isCustomLabel;
     private OnCompleteListener listener;
     private LayoutInflater inflater;
     private DialogAddImageBinding b;
+    private boolean isCustomLabel;
+    private Bitmap image;
+    private AlertDialog dialog;
+    private String url;
+    private Item item;
     private boolean isAlreadyChecked;
 
     /**
@@ -52,21 +52,37 @@ public class AddImageDialog implements ItemHelper.OnCompleteListener {
 
         //Handle cancel event
         handelCancelButton();
+
+
     }
-    public void editFetchImage(Context context ,Item item, OnCompleteListener listener){
+
+    /**
+     * Edit Image which is come from caches
+     *
+     * @param context  Activity state
+     * @param item     {@link Item }
+     * @param listener Complete listener handler
+     */
+
+    public void editFetchImage(Context context, Item item, OnCompleteListener listener) {
         this.url = item.url;
         this.item = item;
-        if(!initializeDialog(context, listener))
+        if (!initializeDialog(context, listener))
             return;
+
         b.DialogTitle.setText("Edit image");
         b.btnAdd.setText("Edit");
         b.loadingText.setText("Please wait...");
+
         editImage(url);
+
+        //Handle cancel event
         handelCancelButton();
     }
 
     /**
      * Check Dialog Initialize or not
+     *
      * @param context  Activity state
      * @param listener Complete listener handler
      */
@@ -74,12 +90,17 @@ public class AddImageDialog implements ItemHelper.OnCompleteListener {
         this.context = context;
         this.listener = listener;
 
-       // Check context is GalleryActivity or not
+        //Check context is GalleryActivity or not
         if (context instanceof GalleryActivity) {
+            //Initialize inflater
             inflater = ((GalleryActivity) context).getLayoutInflater();
+
+            //Initialize binding
             b = DialogAddImageBinding.inflate(inflater);
+
         } else {
             dialog.dismiss();
+            //call listener
             listener.onError("Cast Exception");
             return false;
         }
@@ -89,27 +110,40 @@ public class AddImageDialog implements ItemHelper.OnCompleteListener {
                 .setCancelable(false)
                 .setView(b.getRoot())
                 .show();
-       return true;
+        return true;
     }
+
+
     /**
-     * @param context Activity state
+     * @param context  Activity State
+     * @param path     Image Path
      * @param listener Complete event handler
      */
-    public void fetchImgFromAlbum(Context context,String path,OnCompleteListener listener){
-        if(!initializeDialog(context, listener))
+    public void fetchImageFromFiles(Context context, String path, OnCompleteListener listener) {
+        if (!initializeDialog(context, listener))
             return;
 
-        this.context=context;
-        this.listener=listener;
+        this.context = context;
+        this.listener = listener;
         b.inputDimensionsRoot.setVisibility(View.GONE);
         b.progressIndiacatorRoot.setVisibility(View.VISIBLE);
-        b.loadingText.setText("Please wait....");
-        new ItemHelper().fetchImgFromGallery(context,path,this);
+        b.loadingText.setText("Please wait...");
+
+        new ItemHelper().fetchImageFromGallery(path, context, this);
+
     }
-    private void editImage(String url){
+
+
+    /**
+     * Edit Image
+     *
+     * @param url Image Url
+     */
+    private void editImage(String url) {
         b.inputDimensionsRoot.setVisibility(View.GONE);
         b.progressIndiacatorRoot.setVisibility(View.VISIBLE);
-        new ItemHelper().editImage(url,context,this);
+
+        new ItemHelper().editImage(url, context, this);
     }
 
     /**
@@ -154,6 +188,8 @@ public class AddImageDialog implements ItemHelper.OnCompleteListener {
                 } else {
                     fetchImage(Integer.parseInt(width), Integer.parseInt(height));
                 }
+
+                //hide keyboard
                 hideKeyboard();
             }
         });
@@ -171,22 +207,24 @@ public class AddImageDialog implements ItemHelper.OnCompleteListener {
 
     /**
      * Fetch rectangular Image
-     * @param a=height  of Image
-     * @param b=width  of Image
+     *
+     * @param height Height of Image
+     * @param width  Width of Image
      */
-    private void fetchImage(int a, int b) {
+    private void fetchImage(int width, int height) {
         //call fetchData function of ItemHelper class
         new ItemHelper().
-                fetchData(context,a,b, this);
+                fetchData(width, height, context, this);
     }
 
     /**
      * Fetch square Image
-     * @param x =side
+     *
+     * @param x Height and Width of image
      */
     private void fetchImage(int x) {
         //call fetchData function of ItemHelper class
-        new ItemHelper().fetchData(context,x,  this);
+        new ItemHelper().fetchData(x, context, this);
     }
 
 
@@ -211,9 +249,11 @@ public class AddImageDialog implements ItemHelper.OnCompleteListener {
     }
 
     /**
-     * @param bitmap Store Image
-     * @param colorPalette
-     * @param labels
+     * Update views
+     *
+     * @param bitmap       Store Image
+     * @param colorPalette Store Image colors
+     * @param labels       Store Image labels
      */
     private void showData(Bitmap bitmap, Set<Integer> colorPalette, List<String> labels) {
         this.image = bitmap;
@@ -230,8 +270,11 @@ public class AddImageDialog implements ItemHelper.OnCompleteListener {
         b.mainRoot.setVisibility(View.VISIBLE);
         b.customInputLabel.setVisibility(View.GONE);
         b.btnCancel.setVisibility(View.VISIBLE);
+
         //Handel Custom label
         handelCustomLabel();
+
+
         //Handel add Button
         handelAddImageEvent();
     }
@@ -246,18 +289,20 @@ public class AddImageDialog implements ItemHelper.OnCompleteListener {
             ChipColorBinding binding = ChipColorBinding.inflate(inflater);
             binding.getRoot().setChipBackgroundColor(ColorStateList.valueOf(color));
             this.b.chipPaletteGroup.addView(binding.getRoot());
+
+
             //Edit Image
             //select chip if color present
             if (item != null && item.color == color) {
                 binding.getRoot().setChecked(true);
-
+                Log.d("Abhi", "inflatePaletteChips: ");
             }
         }
     }
 
     /**
      * Add labels in AddImageDialog
-
+     *
      * @param labels Labels of image
      */
     private void inflateLabelChips(List<String> labels) {
@@ -270,7 +315,7 @@ public class AddImageDialog implements ItemHelper.OnCompleteListener {
             //Edit Image
             //Select chip if label present
             if (item != null && item.label.equals(label)) {
-
+                Log.d("Abhi", "inflateLabelChips: ");
                 binding.getRoot().setChecked(true);
                 isAlreadyChecked = true;
             }
@@ -332,9 +377,13 @@ public class AddImageDialog implements ItemHelper.OnCompleteListener {
                 } else {
                     label = ((Chip) b.chipLabelGroup.findViewById(chipLabelId)).getText().toString();
                 }
+
+
                 int color = ((Chip) b.chipPaletteGroup.findViewById(chipPaletteId)).getChipBackgroundColor().getDefaultColor();
+
                 //Send callback
                 listener.onImageAdd(new Item(image, color, label, url));
+
                 dialog.dismiss();
             }
         });
@@ -344,10 +393,12 @@ public class AddImageDialog implements ItemHelper.OnCompleteListener {
      * Interface call when a image is fetch or give some error.
      */
     public interface OnCompleteListener {
+        /**
+         * @param item {@link Item}
+         */
         void onImageAdd(Item item);
+
         void onError(String error);
     }
 
 }
-
-

@@ -29,47 +29,48 @@ import java.util.UUID;
 
 public class ItemHelper {
 
-    private Context context;
     private OnCompleteListener listener;
-    private String url1;
-    private Bitmap bitmap;
+    private String rectangularImageUrl = "https://picsum.photos/%d/%d";
+    private String squareImageUrl = "https://picsum.photos/%d";
+    private Context context;
     private Set<Integer> colors;
+    private Bitmap bitmap;
     private List<String> labels;
-
+    private String url;
 
     /**
      * Fetch rectangular random image
      *
-     * @param a = Height of the image
-     * @param b = Width of the image
+     * @param x        Height of image
+     * @param y        Width of image
      * @param context  Activity state
      * @param listener Complete event handler
      */
-    public void fetchData( Context context,int a, int b, OnCompleteListener listener) {
+    public void fetchData(int x, int y, Context context, OnCompleteListener listener) {
         this.context = context;
         this.listener = listener;
-        // rectangular image url
-        String rectangularImageUrl = "https://picsum.photos/%d/%d";
+        Log.d("Abhi", "fetchImage: " + String.format(rectangularImageUrl, x, y));
         //fetch rectangular image
-        fetchImage(String.format(rectangularImageUrl, a, b));
+        fetchImage(
+                String.format(rectangularImageUrl, x, y));
+
 
     }
 
     /**
      * Fetch square random image
      *
-     * @param x=side
+     * @param x        Height and Width of image
      * @param context  Activity state
      * @param listener Complete event handler
      */
-    public void fetchData(Context context,int x, OnCompleteListener listener) {
+    public void fetchData(int x, Context context, OnCompleteListener listener) {
         this.context = context;
         this.listener = listener;
-        // square image url
-        String squareImageUrl = "https://picsum.photos/%d";
 
         //fetch square image
-        fetchImage(String.format(squareImageUrl, x));
+        fetchImage(
+                String.format(squareImageUrl, x));
     }
 
     /**
@@ -78,14 +79,17 @@ public class ItemHelper {
      * @param url Random Image URl
      */
     private void fetchImage(String url) {
-        new RedirectedURL().getRedirectedURL(new RedirectedURL.OnCompleteListener(){
+
+        //fetch Redirect Url
+        new RedirectURLHelper(new RedirectURLHelper.OnCompleteListener() {
             @Override
-            public void onFetched(String redirectedUrl) {
-                url1 = redirectedUrl;
-                //Fetch image using glide
+            public void fetchRedirectUrl(String redirectUrl) {
+                ItemHelper.this.url = redirectUrl;
+
+                //Fetch image by using glide library
                 Glide.with(context)
                         .asBitmap()
-                        .load(url1)
+                        .load(redirectUrl)
                         .into(new CustomTarget<Bitmap>() {
                             //On image successfully fetch
                             @Override
@@ -93,13 +97,15 @@ public class ItemHelper {
 
                                 bitmap = resource;
 
-                                //Extract color from the image
+                                //Get colors from image
                                 extraPaletteFromBitmap();
                             }
 
                             @Override
                             public void onLoadFailed(@Nullable Drawable errorDrawable) {
                                 super.onLoadFailed(errorDrawable);
+
+                                //call onComplete listener
                                 listener.onError("Image load failed");
                             }
 
@@ -108,60 +114,70 @@ public class ItemHelper {
 
                             }
 
-
                         });
-
             }
 
-
-
+            @Override
+            public void OnFail() {
+                listener.onError("Image load failed");
+            }
         }).execute(url);
+
     }
-    public void editImage(String url, Context context,OnCompleteListener listener){
-        this.context=context;
-        this.url1=url1;
-        this.listener=listener;
-        Glide.with(context).asBitmap().onlyRetrieveFromCache(true).load(url).into(new CustomTarget<Bitmap>() {
-            @Override
-            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                bitmap=resource;
-                extraPaletteFromBitmap();
-            }
-
-            @Override
-            public void onLoadCleared(@Nullable Drawable placeholder) {
-
-            }
-        });
-    }
-
 
     /**
-     * Fetch image from gallery
+     * @param url      Image Url
+     * @param context  Activity state
+     * @param listener Complete event handler
      */
-    public void fetchImgFromGallery(Context context,String path,OnCompleteListener listener){
-        this.context=context;
-        //url1 = redirect url
-        this.url1=path;
-        this.listener=listener;
-
+    public void editImage(String url, Context context, OnCompleteListener listener) {
+        this.context = context;
+        this.url = url;
+        this.listener = listener;
         Glide.with(context)
                 .asBitmap()
-                .load(url1)
+                .onlyRetrieveFromCache(true)
+                .load(url)
                 .into(new CustomTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                        bitmap=resource;
+                        bitmap = resource;
                         extraPaletteFromBitmap();
                     }
 
                     @Override
-
                     public void onLoadCleared(@Nullable Drawable placeholder) {
 
                     }
                 });
+    }
 
+
+    /**
+     * @param path     Image path
+     * @param context  Activity state
+     * @param listener Complete event handler
+     */
+    public void fetchImageFromGallery(String path, Context context, OnCompleteListener listener) {
+        this.context = context;
+        this.url = path;
+        this.listener = listener;
+
+        Glide.with(context)
+                .asBitmap()
+                .load(url)
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        bitmap = resource;
+                        extraPaletteFromBitmap();
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                    }
+                });
     }
 
     /**
@@ -181,10 +197,9 @@ public class ItemHelper {
     }
 
     /**
-     * Fetch labels from image
+     * Fetch labels from image by using mlkit image-labeling library
      */
     private void labelImage() {
-        // creating obj.
         InputImage inputImage = InputImage.fromBitmap(bitmap, 0);
         ImageLabeler labeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS);
 
@@ -199,8 +214,8 @@ public class ItemHelper {
                         for (ImageLabel imageLabel : labels) {
                             ItemHelper.this.labels.add(imageLabel.getText());
                         }
-                        //call when all the data is fetched
-                        listener.onFetch(bitmap, colors, ItemHelper.this.labels, url1);
+                        //call onComplete listener
+                        listener.onFetch(bitmap, colors, ItemHelper.this.labels, url);
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -213,7 +228,6 @@ public class ItemHelper {
     }
 
     /**
-     * Get the color from the palette p
      * @param p Palette of image
      * @return set of colors
      */
@@ -243,14 +257,20 @@ public class ItemHelper {
     interface OnCompleteListener {
         /**
          * Call when image all data fetch completely
+         *
+         * @param bitmap       Image
+         * @param colorPalette Image colors
+         * @param labels       Image labels
+         * @param url          Image url
          */
         void onFetch(Bitmap bitmap, Set<Integer> colorPalette, List<String> labels, String url);
 
         /**
+         * Call when error come
+         *
          * @param exception Error
          */
         void onError(String exception);
     }
 
 }
-

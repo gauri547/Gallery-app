@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GalleryActivity extends AppCompatActivity {
-    private static final int REQUEST_READ_EXTERNAL_STORAGE = 0;
+    private static final int REQUEST_READ_EXTERNAL_STORAGE = 32;
     ActivityGalleryBinding b;
     List<Item> itemList;
     int selectedPosition;
@@ -58,6 +58,8 @@ public class GalleryActivity extends AppCompatActivity {
 
         //Load data from sharedPreferences
         loadSharedPreferenceData();
+
+
     }
 
     /**
@@ -70,11 +72,13 @@ public class GalleryActivity extends AppCompatActivity {
             return;
         }
         b.heading.setVisibility(View.GONE);
+        Log.d("Abhi", "loadSharedPreferenceData: " + items);
         Gson gson = new Gson();
         Type type = new TypeToken<List<Item>>() {
         }.getType();
 
         itemList = gson.fromJson(items, type);
+
 
         //Fetch data from caches
         for (Item item : itemList) {
@@ -88,11 +92,18 @@ public class GalleryActivity extends AppCompatActivity {
             binding.Title.setBackgroundColor(item.color);
             binding.Title.setText(item.label);
 
+            Log.d("Abhi", "onResourceReady: " + item.label);
+
             b.linearLayout.addView(binding.getRoot());
-            setupContextMenu(binding,b.linearLayout.getChildCount()-1);
+            setupContextMenu(binding, b.linearLayout.getChildCount() - 1);
+
+
         }
+
         noOfImages = itemList.size();
+
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -107,18 +118,22 @@ public class GalleryActivity extends AppCompatActivity {
             return true;
         }
         else if(item.getItemId()==R.id.addImage){
-            addImgFromFile();
+            addPhotoFromFile();
         }
         return false;
     }
 
-    private void addImgFromFile() {
+    private void addPhotoFromFile() {
         if(!checkPermission()){
             return;
         }
-        CropImage.activity().setGuidelines(CropImageView.Guidelines.ON).start(this);
+        CropImage.activity()
+                .setGuidelines(CropImageView.Guidelines.ON)
+                .start(this);
 
     }
+
+
     /**
      * Check Storage permission
      * @return Permission Granted or not
@@ -130,34 +145,29 @@ public class GalleryActivity extends AppCompatActivity {
                     new String[] {Manifest.permission.READ_EXTERNAL_STORAGE},REQUEST_READ_EXTERNAL_STORAGE);
 
             return false;
+
         }
+
         return true;
     }
+
+
     @Override
-    public boolean onContextItemSelected(@NonNull MenuItem item){
-        AdapterView.AdapterContextMenuInfo info=(AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-        switch(item.getItemId()){
+    public boolean onContextItemSelected(@NonNull MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        switch (item.getItemId()) {
             case R.id.edit:
                 editImage();
+                return true;
+            case R.id.delete:
+                deleteImage();
                 return true;
             case R.id.share:
                 shareImage();
                 return true;
+
         }
         return super.onContextItemSelected(item);
-    }
-
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if(requestCode==REQUEST_READ_EXTERNAL_STORAGE) {
-            // If request is cancelled, the result arrays are empty.
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                CropImage.activity().setGuidelines(CropImageView.Guidelines.ON).start(this);
-            }
-        }
     }
 
 
@@ -168,44 +178,88 @@ public class GalleryActivity extends AppCompatActivity {
 
         //get Image from ImageView
         ImageView imageView = b.linearLayout.getChildAt(selectedPosition).findViewById(R.id.fetchImage);
-        Bitmap bm = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
-        Uri uri = getImageToShare(bm);
+        Bitmap bitmap = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
+
+        Uri uri = getImageToShare(bitmap);
         Intent intent = new Intent(Intent.ACTION_SEND);
+
         // putting uri of image to be shared
         intent.putExtra(Intent.EXTRA_STREAM, uri);
+
         // setting type to image
         intent.setType("image/jpeg");
+
+        // calling startactivity() to share
         startActivity(Intent.createChooser(intent, "Share Via"));
     }
 
-    private void setupContextMenu(ItemCardBinding binding,int position){
+    /**
+     * Set context menu
+     *
+     * @param binding  Reference of ItemCardBinding
+     * @param position LinearLayout child position
+     */
+    private void setupContextMenu(ItemCardBinding binding, int position) {
+
         binding.cardView.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
             @Override
             public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
                 v.getId();
-                getMenuInflater().inflate(R.menu.context_menu,menu);
-                selectedPosition=position;
+                Log.d("Abhi", "onCreateContextMenu: ");
+
+
+                getMenuInflater().inflate(R.menu.context_menu, menu);
+                selectedPosition = position;
+
             }
         });
-
     }
-    private void editImage(){
+
+
+    /**
+     * Delete Image
+     */
+    private void deleteImage() {
+        Log.d("Abhi", "deleteImage: ");
+
+        b.linearLayout.getChildAt(selectedPosition).setVisibility(View.GONE);
+
+        if (removeItem == null) {
+            removeItem = new ArrayList<>();
+        }
+
+        removeItem.add(itemList.get(selectedPosition));
+
+        --noOfImages;
+
+        if (noOfImages == 0) {
+            b.heading.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * Edit Image
+     */
+    private void editImage() {
         new AddImageDialog().editFetchImage(this, itemList.get(selectedPosition), new AddImageDialog.OnCompleteListener() {
             @Override
             public void onImageAdd(Item item) {
-                TextView tv=b.linearLayout.getChildAt(selectedPosition).findViewById(R.id.Title);
-                tv.setText(item.label);
-                tv.setBackgroundColor(item.color);
-                itemList.set(selectedPosition,new Item(item.color,item.label,item.url));
-                isEdited=true;
+                TextView textView = b.linearLayout.getChildAt(selectedPosition).findViewById(R.id.Title);
+                textView.setText(item.label);
+                textView.setBackgroundColor(item.color);
+                itemList.set(selectedPosition, new Item(item.color, item.label, item.url));
+                isEdited = true;
             }
 
             @Override
             public void onError(String error) {
 
+
             }
         });
     }
+
+
     /**
      * To show the dialog to add image
      */
@@ -228,28 +282,11 @@ public class GalleryActivity extends AppCompatActivity {
                     }
                 });
     }
-    /**
-     * Retrieving the url to share
-     */
-    private Uri getImageToShare(Bitmap  bitmap) {
-        File gallery = new File(getCacheDir(), "images");
-        Uri uri = null;
-        try {
-            gallery.mkdirs();
-            File file = new File(gallery, "shared_image.png");
-            FileOutputStream outputStream = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream);
-            outputStream.flush();
-            outputStream.close();
-            uri = FileProvider.getUriForFile(this, "com.anni.shareimage.fileprovider", file);
-        } catch (Exception e) {
-
-        }
-        return uri;
-    }
 
     /**
      * To inflate the view for the incoming item
+     *
+     * @param item {@link Item}
      */
     private void inflateViewForItem(Item item) {
 
@@ -263,18 +300,26 @@ public class GalleryActivity extends AppCompatActivity {
         binding.fetchImage.setImageBitmap(item.image);
         binding.Title.setBackgroundColor(item.color);
         binding.Title.setText(item.label);
+
+
         b.linearLayout.addView(binding.getRoot());
 
         //Add Item
         Item newItem = new Item(item.color, item.label, item.url);
+
         if (itemList == null) {
             itemList = new ArrayList<>();
         }
+
         itemList.add(newItem);
         isAdd = true;
-        setupContextMenu(binding,b.linearLayout.getChildCount()-1);
+
+        setupContextMenu(binding, b.linearLayout.getChildCount() - 1);
+
         noOfImages++;
     }
+
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -305,13 +350,48 @@ public class GalleryActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onRestart() {
+        super.onRestart();
+        if(isUpdate){
+            recreate();
+            isUpdate=false;
+        }
+
+    }
+
+
+    /**
+     * Retrieving the url to share
+     * @param bitmap  Image
+     * @return Uri of file
+     */
+    private Uri getImageToShare(Bitmap  bitmap) {
+        File imagefolder = new File(getCacheDir(), "images");
+        Uri uri = null;
+        try {
+            imagefolder.mkdirs();
+            File file = new File(imagefolder, "shared_image.png");
+            FileOutputStream outputStream = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream);
+            outputStream.flush();
+            outputStream.close();
+            uri = FileProvider.getUriForFile(this, "com.anni.shareimage.fileprovider", file);
+        } catch (Exception e) {
+
+        }
+        return uri;
+    }
+
+    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE&&resultCode == RESULT_OK) {
             CropImage.ActivityResult result = CropImage.getActivityResult(data);
             Uri resultUri = result.getUri();
 
-            new AddImageDialog().fetchImgFromAlbum(this, resultUri.getPath(), new AddImageDialog.OnCompleteListener() {
+            Log.d("Abhi", "onActivityResult: " +resultUri.getPath());
+
+            new AddImageDialog().fetchImageFromFiles(this, resultUri.getPath(), new AddImageDialog.OnCompleteListener() {
                 @Override
                 public void onImageAdd(Item item) {
                     inflateViewForItem(item);
@@ -325,5 +405,19 @@ public class GalleryActivity extends AppCompatActivity {
 
         }
     }
-}
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if(requestCode==REQUEST_READ_EXTERNAL_STORAGE) {
+            // If request is cancelled, the result arrays are empty.
+            if (grantResults.length > 0 &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                CropImage.activity()
+                        .setGuidelines(CropImageView.Guidelines.ON)
+                        .start(this);
+            }
+        }
+    }
+}
