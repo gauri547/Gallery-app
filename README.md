@@ -1,6 +1,6 @@
 # Gallery-app
 
-Download APK [here](https://github.com/gauri547/Gallery-app/releases/download/v1/app-debug.apk)
+Download APK [here](https://github.com/gauri547/Gallery-app/releases/download/v2/app-debug.apk)
 
 ## Features of the Application
 
